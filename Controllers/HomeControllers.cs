@@ -8,14 +8,62 @@ namespace Todo.Controllers
     public class HomeControllers : ControllerBase
     {
         [HttpGet("/")]
-        public List<TodoModel> Get( [FromServices] AppDbContext context)
+        public IActionResult Get( [FromServices] AppDbContext context)
+         =>Ok (context.Todos.ToList());
+
+        [HttpGet("/{id:int}")]
+        public IActionResult GetById(
+            [FromRoute] int id,
+            [FromServices] AppDbContext context)
         {
-            return context.Todos.ToList();
+            var todos = context.Todos.FirstOrDefault(x => x.Id == id);
+            if (todos == null)
+                return NotFound();
+            return Ok(todos);
         }
-        
-        public string Get()
+
+        [HttpPost("/")]
+        public IActionResult Post(
+            [FromBody]TodoModel todo,
+            [FromServices] AppDbContext context)
         {
-            return "Hello World";
+            context.Todos.Add(todo);
+            context.SaveChanges();
+            return Created($"/{todo.Id}", todo);
+        }
+
+        [HttpPut("/")]
+        public IActionResult Put(
+            [FromRoute] int id,
+            [FromBody] TodoModel todo,
+            [FromServices] AppDbContext context)
+
+        {
+            var model = context.Todos.FirstOrDefault(x=>x.Id == id );
+            if (model == null)
+                return NotFound();
+
+            model.Title = todo.Title;
+            model.Done = true;
+
+            context.Todos.Update(model);
+            context.SaveChanges();
+            return Ok(model);
+        }
+
+        [HttpDelete("/")]
+        public IActionResult Delete(
+            [FromRoute] int id,
+            [FromServices] AppDbContext context)
+
+        {
+            var model = context.Todos.FirstOrDefault(x => x.Id == id);
+            if (model == null)
+                return NotFound();
+
+            context.Todos.Remove(model);
+            context.SaveChanges();
+            return Ok(model);
         }
     }
 }
